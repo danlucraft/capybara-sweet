@@ -34,11 +34,10 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   def find(xpath)
-    p body
-    p xpath
-    r = Nokogiri::HTML(body).xpath(xpath)
-    p r
-    r
+    doc = Nokogiri::HTML(body) 
+    r = doc.xpath(xpath)
+    r1 = r.map {|element| Node.new(element)}
+    r1
   end
   
   def reset!
@@ -47,6 +46,41 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   
   def source
     
+  end
+  
+  class Node < Capybara::Driver::Node
+    def initialize(element)
+      @element = element
+    end
+    
+    def find(xpath)
+      p @element.path
+      @element.xpath(xpath).map {|el| Node.new(el)}
+    end
+    
+    def select_option
+      p [:select_option, self]
+      browser.execute(script=<<-JAVASCRIPT)
+        node = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+        node.selected = true;
+        Syn.trigger('change', {}, node.parentNode);
+        
+      JAVASCRIPT
+      puts script
+      $wait_for_status = listener
+    end
+    
+    def tag_name
+      @element.name
+    end
+    
+    def path
+      @element.path.gsub("/table", "/table/tbody")
+    end
+    
+    def browser
+      CapybaraSweet.driver_window.browser
+    end
   end
   
   private
@@ -63,7 +97,27 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
       @completed
     end
   end
-  
+
+  class RubyFunc < Swt::Browser::BrowserFunction
+    def function(args)
+      begin
+        if result = controller.send(*args.to_a)
+          return JSON(result)
+        else
+          return "{}"
+        end
+      rescue JSON::GeneratorError => e
+        nil
+      rescue Object => e
+        puts "caught in controller"
+        puts e.message
+        puts e.backtrace
+      end
+    end
+
+    attr_accessor :controller
+  end
+
   def browser
     CapybaraSweet.driver_window.browser
   end

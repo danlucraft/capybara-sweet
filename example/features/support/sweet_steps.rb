@@ -10,3 +10,7 @@ end
 When /I wait/ do 
   sleep 5
 end
+
+When /^I select "(.*)" from "(.*)"$/ do |value, field|
+  select(value, :from => field)
+end
