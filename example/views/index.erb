@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script type="text/javascript" src="/app.js"></script>
+  </head>
+  <body>
+    <h3>Hello!</h3>
+    
+    <br />
+    <form action="/submit" method="post">
+      <table border="0">
+        <tr>
+          <td>Choose country: </td>
+          <td>
+            <select name="country" id="country">
+              <option>---</option>
+              <option>United States</option>
+              <option>United Kingdom</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Choose city: </td>
+          <td>
+            <select name="city" id="city" disabled=true>
+              <option>---</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+      <input type="submit" value="Submit" />
+    </form>
+  </body>
+</html>
