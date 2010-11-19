@@ -29,8 +29,12 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     
   end
   
-  def find
-    
+  def find(xpath)
+    p body
+    p xpath
+    r = Nokogiri::HTML(body).xpath(xpath)
+    p r
+    r
   end
   
   def reset!
