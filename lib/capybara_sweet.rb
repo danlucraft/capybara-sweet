@@ -1,10 +1,13 @@
 
 require 'java'
-require 'capybara-sweet/swt/swt_wrapper'
+require 'capybara_sweet/swt/swt_wrapper'
 
 require 'rubygems'
-require 'cucumber'
-require 'capybara-sweet/cucumber_patches'
+require "cucumber/cli/main"
+require "cucumber"
+require "cucumber/rb_support/rb_language"
+require 'capybara_sweet/cucumber_patches'
+require 'capybara_sweet/driver_window'
 
 module CapybaraSweet
   class << self
@@ -13,7 +16,6 @@ module CapybaraSweet
   
   def self.setup
     @driver_window = DriverWindow.new
-    start_gui
   end
   
   def self.start_gui
@@ -26,23 +28,26 @@ module CapybaraSweet
     @display.dispose
   end
   
-  class DriverWindow
-    attr_reader :browser, :shell
+  START_DELAY = 1
   
-    def initialize
-      display = Swt::Widgets::Display.get_current
-      @shell = Swt::Widgets::Shell.new
-      @shell.set_minimum_size(800, 600)
-      
-      layout = Swt::Layout::FillLayout.new
-      @shell.setLayout(layout)
-      
-      @browser = Swt::Browser.new(@shell, Swt::SWT::NONE)
-      
-      @shell.pack
-      @shell.open
+  def self.sync_exec(&block)
+    display.syncExec(Swt::RRunnable.new(&block))
+  end
+  
+  def self.run_features(args)
+    Thread.new do
+      begin
+        sleep START_DELAY
+        main = Cucumber::Cli::Main.new(args)
+        main.execute!
+        sync_exec { CapybaraSweet.driver_window.shell.dispose }
+      rescue Object => e
+        puts e.message
+        puts e.backtrace
+      end
     end
   end
+  
 end
 
 Swt::Widgets::Display.set_app_name "Capybara Sweet"

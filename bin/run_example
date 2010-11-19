@@ -2,3 +2,5 @@ $:.push(File.dirname(__FILE__) + "/../lib/")
 require 'capybara_sweet'
 
 CapybaraSweet.setup
+CapybaraSweet.run_features(ARGV)
+CapybaraSweet.start_gui

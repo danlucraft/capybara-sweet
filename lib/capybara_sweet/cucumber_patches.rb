@@ -7,9 +7,7 @@ module Cucumber
       end
 
       def invoke_with_swt(step_mother, options)
-        block = Swt::RRunnable.new { invoke_without_swt(step_mother, options) }
-
-        CapybaraSweet.display.syncExec(block)
+        CapybaraSweet.sync_exec { invoke_without_swt(step_mother, options) }
         sleep ENV["SLOW_CUKES"].to_f if ENV["SLOW_CUKES"]
         sleep(Cucumber::Ast::StepInvocation.wait_time || 0)
         Cucumber::Ast::StepInvocation.wait_time = nil

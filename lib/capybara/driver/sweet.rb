@@ -48,9 +48,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   private
   
   def browser
-    tab = Redcar.app.focussed_notebook_tab
-    raise "focussed tab is not a webview" unless tab.is_a?(Redcar::HtmlTab)
-    tab.controller.browser
+    CapybaraSweet.driver_window.browser
   end
 end
 
