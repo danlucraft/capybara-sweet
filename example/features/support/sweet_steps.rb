@@ -6,3 +6,7 @@ end
 Then /^I should see "(.*)"$/ do |expected|
   body.include?(expected).should be_true
 end
+
+When /I wait/ do 
+  sleep 5
+end
