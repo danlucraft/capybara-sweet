@@ -6,6 +6,7 @@ require 'rubygems'
 require "cucumber/cli/main"
 require "cucumber"
 require "cucumber/rb_support/rb_language"
+require 'capybara_sweet/ruby_func'
 require 'capybara_sweet/cucumber_patches'
 require 'capybara_sweet/driver_window'
 
@@ -32,6 +33,10 @@ module CapybaraSweet
   
   def self.sync_exec(&block)
     display.syncExec(Swt::RRunnable.new(&block))
+  end
+  
+  def self.browser_responses
+    @browser_responses ||= []
   end
   
   def self.run_features(args)

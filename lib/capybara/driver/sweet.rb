@@ -14,7 +14,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   def body
-    browser.get_text
+    browser.evaluate("return $(\"html\")[0].innerHTML")
   end
   
   def current_path
@@ -54,20 +54,58 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     end
     
     def find(xpath)
-      p @element.path
       @element.xpath(xpath).map {|el| Node.new(el)}
     end
     
-    def select_option
-      p [:select_option, self]
+    def click(*args)
       browser.execute(script=<<-JAVASCRIPT)
+      try {
+        element = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+        Syn.trigger('click', {}, element);
+        capybaraSweet("finished_click")
+      }
+      catch(e) {
+        alert(e);
+      }
+      JAVASCRIPT
+      $wait_for_response = ["finished_click"]
+    end
+    
+    def set(value)
+      browser.execute(script=<<-JAVASCRIPT)
+      try {
+        field = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+        if (field.type === 'file') return callback('not_allowed');
+
+        Syn.trigger('focus', {}, field);
+        Syn.trigger('click', {}, field);
+        var value = #{value.inspect};
+        switch (typeof value) {
+          case 'string':  field.value = value;    break;
+          case 'boolean': field.checked = value;  break;
+        }
+        capybaraSweet("finished_set")
+      }
+      catch(e) {
+        alert(e);
+      }
+      JAVASCRIPT
+      $wait_for_response = ["finished_set"]
+    end
+    
+    def select_option
+      browser.execute(script=<<-JAVASCRIPT)
+      try {
         node = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
         node.selected = true;
         Syn.trigger('change', {}, node.parentNode);
-        
+        capybaraSweet("finished_select");
+      }
+      catch(e) {
+        alert(e);
+      }
       JAVASCRIPT
-      puts script
-      $wait_for_status = listener
+      $wait_for_response = ["finished_select"]
     end
     
     def tag_name
@@ -75,7 +113,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     end
     
     def path
-      @element.path.gsub("/table", "/table/tbody")
+      @element.path.gsub("/table", "/table/tbody").gsub("/tbody/tbody", "/tbody")
     end
     
     def browser
@@ -89,33 +127,12 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     def changed(*_); end
     
     def completed(*_)
-      p :completed
       @completed = true
     end
     
     def completed?
       @completed
     end
-  end
-
-  class RubyFunc < Swt::Browser::BrowserFunction
-    def function(args)
-      begin
-        if result = controller.send(*args.to_a)
-          return JSON(result)
-        else
-          return "{}"
-        end
-      rescue JSON::GeneratorError => e
-        nil
-      rescue Object => e
-        puts "caught in controller"
-        puts e.message
-        puts e.backtrace
-      end
-    end
-
-    attr_accessor :controller
   end
 
   def browser

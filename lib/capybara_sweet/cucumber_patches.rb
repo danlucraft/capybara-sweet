@@ -17,6 +17,16 @@ module Cucumber
             CapybaraSweet.driver_window.browser.remove_progress_listener(listener)
           end
           $wait_for_completion = nil
+        elsif required_response = $wait_for_response
+          true until CapybaraSweet.browser_responses.include?(required_response)
+          $wait_for_response = nil
+        end
+        CapybaraSweet.browser_responses.clear
+        num_active_ajax = 1
+        while num_active_ajax > 0
+          CapybaraSweet.sync_exec do
+            num_active_ajax = CapybaraSweet.driver_window.browser.evaluate("return $.active")
+          end
         end
       end
 

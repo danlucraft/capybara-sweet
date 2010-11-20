@@ -17,8 +17,5 @@ get '/cities/:id' do |id|
 end
 
 post '/submit' do
-  result = <<-HTML
-    You chose the city #{params["city"]} in the country #{params["country"]}.<br />
-    Your notes were #{params["notes"].length} characters long and said: "#{params["notes"]}".
-  HTML
+  erb :result
 end

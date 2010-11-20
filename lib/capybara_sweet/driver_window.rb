@@ -12,7 +12,8 @@ module CapybaraSweet
       @shell.setLayout(layout)
       
       @browser = Swt::Browser.new(@shell, Swt::SWT::NONE)
-      
+      RubyFunc.new(@browser, "capybaraSweet")
+
       @shell.pack
       @shell.open
     end
