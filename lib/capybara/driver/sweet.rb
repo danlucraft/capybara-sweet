@@ -7,10 +7,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   
   def visit(path)
     url = Capybara.app_host + path
-    listener = ProgressListener.new
-    browser.add_progress_listener(listener)
     browser.set_url(url)
-    $wait_for_completion = listener
   end
   
   def body
@@ -123,18 +120,6 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   
   private
   
-  class ProgressListener
-    def changed(*_); end
-    
-    def completed(*_)
-      @completed = true
-    end
-    
-    def completed?
-      @completed
-    end
-  end
-
   def browser
     CapybaraSweet.driver_window.browser
   end

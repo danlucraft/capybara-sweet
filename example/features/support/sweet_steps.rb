@@ -4,7 +4,8 @@ When /^I visit "(.*)"$/ do |path|
 end
 
 Then /^I should see "(.*)"$/ do |expected|
-  body.include?(expected).should be_true
+  r = body
+  r.include?(expected).should be_true
 end
 
 When /I wait/ do 
