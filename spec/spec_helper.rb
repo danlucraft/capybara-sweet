@@ -27,16 +27,9 @@ alias :running :lambda
 
 RSpec.configure do |c|
   c.before(:each) do
-    CapybaraSweet::Sync.new.wait_on_location_change
   end
   
   c.after(:each) do
-  end
-  
-  c.around(:each) do |example|
-    CapybaraSweet.sync_exec do
-      example.run
-    end
   end
   
   c.after(:suite) do

@@ -24,7 +24,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   
   def body
     run do
-      browser.evaluate("return $(\"html\")[0].innerHTML")
+      browser.evaluate("return document.documentElement.innerHTML;")
     end
   end
   
