@@ -22,42 +22,36 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     end
   end
   
+  def current_url
+    run do
+      browser.get_url
+    end
+  end
+  
+  def reset!
+    CapybaraSweet.sync_exec do
+      Swt::Browser.clear_sessions
+    end
+  end
+  
   def body
     run do
       browser.evaluate("return document.documentElement.innerHTML;")
     end
   end
   
-  def current_path
-    
-  end
-  
-  def current_url
-    
-  end
-  
-  def evaluate_script
-    
-  end
-  
-  def execute_script
-    
-  end
-  
   def find(xpath)
     run do
       doc = Nokogiri::HTML(body) 
       r = doc.xpath(xpath)
-      r.map {|element| Node.new(element)}
+      r.map {|element| Node.new(self, element)}
     end
   end
   
-  def reset!
-    
-  end
-  
-  def source
-    
+  def evaluate_script(script)
+    run do
+      browser.evaluate("return (#{script})")
+    end
   end
   
   def run
@@ -68,13 +62,54 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   class Node < Capybara::Driver::Node
-    def initialize(element)
-      @element = element
+    def find(xpath)
+      native.xpath(xpath).map {|el| Node.new(driver, el)}
     end
     
-    def find(xpath)
+    def text
+      native.text
+    end
+    
+    def [](name)
+      native.attr(name)
+    end
+    
+    def get_element
+      "document.evaluate(\"#{path}\", document, null, XPathResult.ANY_TYPE, null).iterateNext();"
+    end
+    
+    def visible?
       run do
-        @element.xpath(xpath).map {|el| Node.new(el)}
+        browser.evaluate(script=<<-JAVASCRIPT)
+          var node = #{get_element}
+
+          while (node.tagName.toLowerCase() !== 'body') {
+            if (node.style.display === 'none' || node.type === 'hidden')
+              return false;
+            node = node.parentNode;
+          }
+          return true;
+        JAVASCRIPT
+      end
+    end
+    
+    def drag_to(node)
+      run do
+        browser.evaluate(script=<<-JAVASCRIPT)
+          var from = #{get_element}
+          var to = #{node.get_element}
+          Syn.drag({to: to}, from, function() { capybaraSweet("finished_drag"); });
+        JAVASCRIPT
+        $wait_for_response = ["finished_drag"]
+      end
+    end
+    
+    def value
+      run do
+        browser.evaluate(script=<<-JAVASCRIPT)
+          element = #{get_element}
+          return element.value;
+        JAVASCRIPT
       end
     end
     
@@ -82,7 +117,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
       run do
         browser.execute(script=<<-JAVASCRIPT)
         try {
-          element = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          element = #{get_element}
           Syn.trigger('click', {}, element);
           capybaraSweet("finished_click")
         }
@@ -98,7 +133,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
       run do
         browser.execute(script=<<-JAVASCRIPT)
         try {
-          field = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          field = #{get_element}
           if (field.type === 'file') return callback('not_allowed');
             
             Syn.trigger('focus', {}, field);
@@ -122,7 +157,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
       run do
         browser.execute(script=<<-JAVASCRIPT)
         try {
-          node = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          node = #{get_element}
           node.selected = true;
           Syn.trigger('change', {}, node.parentNode);
           capybaraSweet("finished_select");
@@ -136,11 +171,11 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     end
     
     def tag_name
-      @element.name
+      native.name
     end
     
     def path
-      @element.path.gsub("/table", "/table/tbody").gsub("/tbody/tbody", "/tbody")
+      native.path.gsub("/table", "/table/tbody").gsub("/tbody/tbody", "/tbody")
     end
     
     def browser

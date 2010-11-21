@@ -14,6 +14,9 @@ class TestApp
           <meta http-equiv="Content-type" content="text/html; charset=utf-8">
           <title>Capybara Sweet Driver Test</title>
           <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+          <script type="text/javascript">
+            <%= File.read(File.expand_path(File.dirname(__FILE__) + "/../example/public/syn.js")) %>
+          </script>
         </head>
         <body>
           <%= yield %>
