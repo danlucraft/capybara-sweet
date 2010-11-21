@@ -34,11 +34,20 @@ module CapybaraSweet
   START_DELAY = 1
   
   def self.sync_exec(&block)
-    display.syncExec(Swt::RRunnable.new(&block))
+    runnable = Swt::RRunnable.new(&block)
+    display.syncExec(runnable)
+    runnable.result
   end
   
   def self.browser_responses
     @browser_responses ||= []
+  end
+  
+  def self.sync
+    sync = CapybaraSweet::Sync.new
+    sync.wait_on_response
+    sync.wait_on_location_change
+    sync.wait_on_active_ajax
   end
   
   def self.run_features(args)

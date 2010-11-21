@@ -102,13 +102,15 @@ module Swt
   
   class RRunnable
     include java.lang.Runnable
+    
+    attr_reader :result
 
     def initialize(&block)
       @block = block
     end
 
     def run
-      @block.call
+      @result = @block.call
     end
   end
 end

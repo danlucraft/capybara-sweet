@@ -5,7 +5,13 @@ module CapybaraSweet
       num_active_ajax = 1
       while num_active_ajax > 0
         CapybaraSweet.sync_exec do
-          num_active_ajax = CapybaraSweet.driver_window.browser.evaluate("return $.active")
+          begin
+            num_active_ajax = CapybaraSweet.driver_window.browser.evaluate("return $.active")
+          rescue => e
+            if e.message =~ /Can't find variable: \$/
+              num_active_ajax = 0
+            end
+          end
         end
       end
     end

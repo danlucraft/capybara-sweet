@@ -9,7 +9,9 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   def visit(path)
-    browser.set_url(url(path))
+    run do
+      browser.set_url(url(path))
+    end
   end
   
   def url(path)
@@ -21,7 +23,9 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   def body
-    browser.evaluate("return $(\"html\")[0].innerHTML")
+    run do
+      browser.evaluate("return $(\"html\")[0].innerHTML")
+    end
   end
   
   def current_path
@@ -41,10 +45,11 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
   end
   
   def find(xpath)
-    doc = Nokogiri::HTML(body) 
-    r = doc.xpath(xpath)
-    r1 = r.map {|element| Node.new(element)}
-    r1
+    run do
+      doc = Nokogiri::HTML(body) 
+      r = doc.xpath(xpath)
+      r.map {|element| Node.new(element)}
+    end
   end
   
   def reset!
@@ -55,64 +60,79 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     
   end
   
+  def run
+    CapybaraSweet.sync
+    result = CapybaraSweet.sync_exec { yield }
+    CapybaraSweet.sync
+    result
+  end
+  
   class Node < Capybara::Driver::Node
     def initialize(element)
       @element = element
     end
     
     def find(xpath)
-      @element.xpath(xpath).map {|el| Node.new(el)}
+      run do
+        @element.xpath(xpath).map {|el| Node.new(el)}
+      end
     end
     
     def click(*args)
-      browser.execute(script=<<-JAVASCRIPT)
-      try {
-        element = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
-        Syn.trigger('click', {}, element);
-        capybaraSweet("finished_click")
-      }
-      catch(e) {
-        alert(e);
-      }
-      JAVASCRIPT
-      $wait_for_response = ["finished_click"]
+      run do
+        browser.execute(script=<<-JAVASCRIPT)
+        try {
+          element = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          Syn.trigger('click', {}, element);
+          capybaraSweet("finished_click")
+        }
+        catch(e) {
+          alert(e);
+        }
+        JAVASCRIPT
+        $wait_for_response = ["finished_click"]
+      end
     end
     
     def set(value)
-      browser.execute(script=<<-JAVASCRIPT)
-      try {
-        field = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
-        if (field.type === 'file') return callback('not_allowed');
-
-        Syn.trigger('focus', {}, field);
-        Syn.trigger('click', {}, field);
-        var value = #{value.inspect};
-        switch (typeof value) {
-          case 'string':  field.value = value;    break;
-          case 'boolean': field.checked = value;  break;
+      run do
+        browser.execute(script=<<-JAVASCRIPT)
+        try {
+          field = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          if (field.type === 'file') return callback('not_allowed');
+            
+            Syn.trigger('focus', {}, field);
+            Syn.trigger('click', {}, field);
+            var value = #{value.inspect};
+          switch (typeof value) {
+            case 'string':  field.value = value;    break;
+            case 'boolean': field.checked = value;  break;
+            }
+            capybaraSweet("finished_set")
+          }
+        catch(e) {
+          alert(e);
         }
-        capybaraSweet("finished_set")
-      }
-      catch(e) {
-        alert(e);
-      }
-      JAVASCRIPT
-      $wait_for_response = ["finished_set"]
+        JAVASCRIPT
+        $wait_for_response = ["finished_set"]
+      end
     end
     
     def select_option
-      browser.execute(script=<<-JAVASCRIPT)
-      try {
-        node = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
-        node.selected = true;
-        Syn.trigger('change', {}, node.parentNode);
-        capybaraSweet("finished_select");
-      }
-      catch(e) {
-        alert(e);
-      }
-      JAVASCRIPT
-      $wait_for_response = ["finished_select"]
+      run do
+        browser.execute(script=<<-JAVASCRIPT)
+        try {
+          node = document.evaluate("#{path}", document, null, XPathResult.ANY_TYPE, null).iterateNext();
+          node.selected = true;
+          Syn.trigger('change', {}, node.parentNode);
+          capybaraSweet("finished_select");
+        }
+        catch(e) {
+          alert(e);
+        }
+        JAVASCRIPT
+        $wait_for_response = ["finished_select"]
+      end
     end
     
     def tag_name
@@ -125,6 +145,13 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     
     def browser
       CapybaraSweet.driver_window.browser
+    end
+        
+    def run
+      CapybaraSweet.sync
+      result = CapybaraSweet.sync_exec { yield }
+      CapybaraSweet.sync
+      result
     end
   end
   
