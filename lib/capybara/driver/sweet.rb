@@ -1,13 +1,23 @@
 
 class Capybara::Driver::Sweet < Capybara::Driver::Base
   def initialize(app)
-    @app = app
-    
+    if app
+      @app = app
+      @rack_server = Capybara::Server.new(@app)
+      @rack_server.boot if Capybara.run_server
+    end
   end
   
   def visit(path)
-    url = Capybara.app_host + path
-    browser.set_url(url)
+    browser.set_url(url(path))
+  end
+  
+  def url(path)
+    if @rack_server
+      @rack_server.url(path)
+    else
+      Capybara.app_host + path
+    end
   end
   
   def body

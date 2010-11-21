@@ -6,9 +6,11 @@ require 'rubygems'
 require "cucumber/cli/main"
 require "cucumber"
 require "cucumber/rb_support/rb_language"
+require 'capybara'
 require 'capybara_sweet/ruby_func'
 require 'capybara_sweet/cucumber_patches'
 require 'capybara_sweet/driver_window'
+require 'capybara_sweet/sync'
 
 module CapybaraSweet
   class << self

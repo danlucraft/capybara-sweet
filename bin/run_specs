@@ -1,0 +1,24 @@
+$:.push(File.dirname(__FILE__) + "/../lib/")
+require 'capybara_sweet'
+
+CapybaraSweet.setup
+
+require 'rubygems'
+gem 'rspec-core'
+require 'rspec/core'
+RSpec::Core::Runner.disable_autorun!
+require 'spec/spec_helper'
+
+
+START_DELAY = 1
+Thread.new do
+  begin
+    sleep START_DELAY
+    RSpec::Core::Runner.run(ARGV, $stderr, $stdout)
+  rescue Object => e
+    puts e.message
+    puts e.backtrace
+  end
+end
+
+CapybaraSweet.start_gui
