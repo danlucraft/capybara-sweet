@@ -40,6 +40,12 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
     end
   end
   
+  def source
+    run do
+      browser.get_text
+    end
+  end
+  
   def find(xpath)
     run do
       doc = Nokogiri::HTML(body) 
@@ -47,6 +53,8 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
       r.map {|element| Node.new(self, element)}
     end
   end
+  
+  alias :all :find
   
   def evaluate_script(script)
     run do
@@ -98,7 +106,7 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
         browser.evaluate(script=<<-JAVASCRIPT)
           var from = #{get_element}
           var to = #{node.get_element}
-          Syn.drag({to: to}, from, function() { capybaraSweet("finished_drag"); });
+          Syn.drag({to: to}, from, function() { sweetCallback("finished_drag"); });
         JAVASCRIPT
         $wait_for_response = ["finished_drag"]
       end
@@ -119,10 +127,10 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
         try {
           element = #{get_element}
           Syn.trigger('click', {}, element);
-          capybaraSweet("finished_click")
+          sweetCallback("finished_click")
         }
         catch(e) {
-          alert(e);
+          sweetLog("click: " + e);
         }
         JAVASCRIPT
         $wait_for_response = ["finished_click"]
@@ -134,19 +142,23 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
         browser.execute(script=<<-JAVASCRIPT)
         try {
           field = #{get_element}
-          if (field.type === 'file') return callback('not_allowed');
-            
+          if (field.type === 'file') {
+            sweetLog("can't set file elements");
+            sweetCallback("finished_set")
+          }
+          else { 
             Syn.trigger('focus', {}, field);
             Syn.trigger('click', {}, field);
             var value = #{value.inspect};
-          switch (typeof value) {
-            case 'string':  field.value = value;    break;
-            case 'boolean': field.checked = value;  break;
-            }
-            capybaraSweet("finished_set")
+            switch (typeof value) {
+              case 'string':  field.value = value;    break;
+                case 'boolean': field.checked = value;  break;
+                }
+            sweetCallback("finished_set")
           }
+        }
         catch(e) {
-          alert(e);
+          sweetLog("set: " + e);
         }
         JAVASCRIPT
         $wait_for_response = ["finished_set"]
@@ -160,10 +172,10 @@ class Capybara::Driver::Sweet < Capybara::Driver::Base
           node = #{get_element}
           node.selected = true;
           Syn.trigger('change', {}, node.parentNode);
-          capybaraSweet("finished_select");
+          sweetCallback("finished_select");
         }
         catch(e) {
-          alert(e);
+          sweetLog("select_option: " + e);
         }
         JAVASCRIPT
         $wait_for_response = ["finished_select"]

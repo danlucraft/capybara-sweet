@@ -14,12 +14,10 @@ START_DELAY = 1
 Thread.new do
   begin
     sleep START_DELAY
-    p [:specs_thread, Thread.current]
     RSpec::Core::Runner.run(ARGV, $stderr, $stdout)
   rescue Object => e
     puts e.message
     puts e.backtrace
   end
 end
-p [:gui_thread, Thread.current]
 CapybaraSweet.start_gui

@@ -12,7 +12,8 @@ module CapybaraSweet
       @shell.setLayout(layout)
       
       @browser = Swt::Browser.new(@shell, Swt::SWT::NONE)
-      RubyFunc.new(@browser, "capybaraSweet")
+      CallbackFunction.new(@browser, "sweetCallback")
+      LoggingFunction.new(@browser, "sweetLog")
       
       @location_listener = LocationListener.new
       @progress_listener = ProgressListener.new
